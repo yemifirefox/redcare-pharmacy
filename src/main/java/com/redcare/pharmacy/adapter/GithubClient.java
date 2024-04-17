@@ -3,6 +3,8 @@ package com.redcare.pharmacy.adapter;
 import com.redcare.pharmacy.dto.Repository;
 import com.redcare.pharmacy.dto.RepositoryDto;
 import com.redcare.pharmacy.exception.RemoteSystemException;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -31,15 +33,15 @@ public class GithubClient implements GithubPort{
                         .build())
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, (request, response) -> {
-                    throw new RemoteSystemException("Unable to retrieve repositories");
+                    throw new RemoteSystemException(HttpStatus.NOT_FOUND, "Unable to retrieve repositories");
                 })
                 .onStatus(HttpStatusCode::is5xxServerError, (request, response) -> {
-                    throw new RemoteSystemException("Server error");
+                    throw new RemoteSystemException(HttpStatus.INTERNAL_SERVER_ERROR, "Server error");
                 })
                 .body(Repository.class);
 
         if (result == null || result.items().isEmpty()) {
-            throw new RemoteSystemException("No repositories found");
+            throw new RemoteSystemException(HttpStatus.NOT_FOUND, "No repositories found");
         }
         return result.items();
     }
